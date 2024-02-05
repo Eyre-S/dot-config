@@ -1,0 +1,12 @@
+{
+	"valid_line": {
+		"background": "transparent",
+		"foreground": "#4ec460",
+		"template": "\u276f "
+	},
+	"error_line": {
+		"background": "transparent",
+		"foreground": "#E06C75",
+		"template": "\u276f "
+	}
+}

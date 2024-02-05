@@ -1,0 +1,46 @@
+# Main Colors
+unrecognized_file: darkkhaki
+recognized_file:   yellow
+executable_file:   limegreen
+dir:               royalblue
+
+# Link
+dead_link: red
+link:      cyan
+
+# special files
+socket:    darkgray
+blockdev:  darkgray
+chardev:   darkgray
+
+# Access Modes
+write:     orange
+read:      limegreen
+exec:      crimson
+no_access: lavender
+
+# Age
+hour_old:    '#009bff'
+day_old:     '#33a8ff'
+no_modifier: '#88b0ff'
+
+# File Size
+file_large:  orange
+file_medium: sandybrown
+file_small:  burlywood
+
+# Random
+report: black
+normal: hotpink
+user:   palevioletred
+tree:   cyan
+empty:  yellow
+error:  red
+inode:  plum
+
+# Git
+addition:     chartreuse
+modification: darkkhaki
+deletion:     darkred
+untracked:    darkorange
+unchanged:    darkgreen
