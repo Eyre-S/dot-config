@@ -8,6 +8,8 @@
 <# =================
  -   user variable
  #>
+. "$HOME/OneDrive/sukazyo-pin/environment.ps1"
+
 $ws = "S:\workspace"
 $tests = "S:\__test"
 
@@ -25,6 +27,10 @@ function nexplorer { explorer . }
 function whereis {
 	Get-Command $args | Format-List
 }
+
+function dos2unix { & "C:/Program Files/Git/usr/bin/dos2unix" $args }
+
+function unix2dos { & "C:/Program Files/Git/usr/bin/unix2dos" $args }
 
 <# == batcat == #>
 Set-Alias -Name cat -Value bat
@@ -199,6 +205,22 @@ Set-Alias -Name cdi -Value zi
 # if (Test-Path($ChocolateyProfile)) {
 # 	Import-Module "$ChocolateyProfile"
 # }
+
+<# === Python Versions managered by hatch === #>
+
+$pythons = "$HOME/AppData/Local/hatch/pythons"
+
+function pys () {
+    $version, $args_pass = $args
+    $py_path = "$pythons/$version/python"
+    echo "using Python version : $version"
+    echo "using Python path : $py_path"
+    & "$py_path/python.exe" $args_pass
+}
+
+function pysm () {
+    hatch python $args
+}
 
 <# === Oh-My-Posh === #>
 
