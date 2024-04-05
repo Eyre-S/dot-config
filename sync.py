@@ -6,17 +6,43 @@ import os
 from os import path
 from pathlib import Path
 
+#=== Init ===#
 
 backup_root: str = path.dirname(__file__)
 user_home: str = path.expanduser("~")
 
 if user_home == "~":
     print("WARN: Cannot read the user home dir, do you run it in the correct script?")
-    print("continue? [y/N]")
-    if (input().lower != 'y'):
-        exit()
+    exit()
 else:
     print("dot-config: current user home: " + user_home)
+
+class SysType (Enum):
+    LINUX = "linux"
+    TERMUX = "termux"
+    WINDOWS = "windows"
+if ("termux" in backup_root):
+    sys_type: SysType = SysType.TERMUX
+elif (backup_root[0] == "/"):
+    sys_type: SysType = SysType.LINUX
+else:
+    sys_type: SysType = SysType.WINDOWS
+print(f"dot config: your dot-config path is {backup_root}")
+print(f"dot config: your system type is {sys_type}")
+print(f"Is all the informations correct? [y/n] ", end="")
+while True:
+    _in = input()
+    match _in:
+        case "y":
+            print("continuing...")
+            break;
+        case "n":
+            print("Exiting")
+            exit()
+        case _:
+            print("please confirm with [y/n] ", end="")
+
+#=== Utils ===#
 
 def sorted_paths (paths: Iterable[str]) -> list[str]:
     fin = sorted(paths)
@@ -25,6 +51,8 @@ def sorted_paths (paths: Iterable[str]) -> list[str]:
 def de_abs_path (path: str) -> str:
     return path.strip('/').strip('\\')
 
+#=== Backup Item ===#
+
 class BackupItem:
     def __init__ (self, backup_dir: str, origin_dir: str) -> None:
         self.name: str = backup_dir
@@ -32,7 +60,8 @@ class BackupItem:
         self.origin_dir: str = path.abspath(path.expanduser(origin_dir))
 
 table: list[BackupItem] = [
-    BackupItem("PowerShell", "~/Documents/PowerShell")
+    BackupItem("PowerShell", "~/Documents/PowerShell"),
+    BackupItem("lsd", "~/.config/lsd")
 ]
 
 def execute_sync (backupItem: BackupItem) -> None:
@@ -94,6 +123,9 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str) -> None:
             print(f"{relative_file_path} : original file is newer")
         case IsNewerStatus.DIFFERENT:
             print(f"{relative_file_path} : WARN : backup is different but cannot determine which is newer")
+
+
+#=== main ===#
 
 for i in table:
     execute_sync(i)
