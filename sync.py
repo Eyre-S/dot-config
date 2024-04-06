@@ -147,9 +147,9 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
                 return NewerStatus.ALL_MISSING
             return NewerStatus.RIGHT_MISSING
         if left.edited_time > right.edited_time:
-            return NewerStatus.LEFT_OLDER
+            return check_hash_same_or(NewerStatus.LEFT_OLDER)
         elif left.edited_time < right.edited_time:
-            return NewerStatus.RIGHT_OLDER
+            return check_hash_same_or(NewerStatus.RIGHT_OLDER)
         if left.size != right.size:
             return NewerStatus.DIFFERENT
         return NewerStatus.SAME
