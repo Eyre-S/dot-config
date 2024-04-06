@@ -1,0 +1,28 @@
+{
+    "backups": [
+        {
+            "path": "PowerShell",
+            "source": "~/Documents/PowerShell"
+        },
+        {
+            "path": "oh-my-posh",
+            "source": "~/.config/oh-my-posh"
+        },
+        {
+            "path": "lsd",
+            "source": "%AppData%/lsd"
+        },
+        {
+            "path": "bat",
+            "source": "%AppData%/bat"
+        },
+        {
+            "path": "neofetch",
+            "source": "~/.config/neofetch"
+        },
+        {
+            "path": "hyfetch/hyfetch.json",
+            "source": "~/.config/hyfetch.json"
+        }
+    ]
+}

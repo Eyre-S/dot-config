@@ -1,0 +1,24 @@
+{
+  "backups": [
+    {
+      "path": "zsh/linux.custom_rc.zsh",
+      "source": "~/.custom_rc"
+    },
+    {
+      "path": "lsd",
+      "source": "~/.config/lsd"
+    },
+    {
+      "path": "bat",
+      "source": "~/.config/bat"
+    },
+    {
+      "path": "neofetch",
+      "source": "~/.config/neofetch"
+    },
+    {
+      "path": "hyfetch/hyfetch.json",
+      "source": "~/.config/hyfetch.json"
+    }
+  ]
+}

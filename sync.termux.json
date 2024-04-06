@@ -1,0 +1,24 @@
+{
+  "backups": [
+    {
+      "path": "zsh/termux.zshrc.zsh",
+      "source": "~/.zshrc"
+    },
+    {
+      "path": "lsd",
+      "source": "~/.config/lsd"
+    },
+    {
+      "path": "bat",
+      "source": "~/.config/bat"
+    },
+    {
+      "path": "neofetch",
+      "source": "~/.config/neofetch"
+    },
+    {
+      "path": "hyfetch/hyfetch.json",
+      "source": "~/.config/hyfetch.json"
+    }
+  ]
+}
