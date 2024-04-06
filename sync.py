@@ -1,4 +1,3 @@
-from turtle import back
 from typing import Callable, Iterable, TypeVar
 from enum import Enum
 from math import nan
@@ -77,29 +76,33 @@ class BackupItem:
 
 def execute_sync (backupItem: BackupItem) -> None:
     print(f">>> executing backup for {backupItem.name}")
-    all_files_tmp: list[str] = []
+    exec_gallery: list[Callable] = []
     ### for file mode
     if (path.isfile(backupItem.origin_dir)) or (path.isfile(backupItem.backup_dir)):
-        compare_file(backupItem, None)
+        exec_gallery.append(compare_file(backupItem, None))
     ### for dir mode
-    def walk_dir (walking_dir: str):
-        for root, dirs, files in os.walk(walking_dir):
-            common_root: str = path.commonpath([root, walking_dir])
-            if common_root == walking_dir:
-                relative_root: str = root[len(walking_dir):]
-            else:
-                print(f"WARN: cannot find common root for {root} and {walking_dir}, will break this dir.")
-                continue 
-            for file in files:
-                relative_file_path = de_abs_path(path.join(relative_root, file))
-                # print(f"find file in source: {`relative_file_path`}")
-                all_files_tmp.append(relative_file_path)
-    walk_dir(backupItem.origin_dir)
-    walk_dir(backupItem.backup_dir)
-    all_files: list[str] = sorted_paths(set(all_files_tmp))
-    exec_gallery: list[Callable] = []
-    for file in all_files:
-        exec_gallery.append(compare_file(backupItem, file))
+    else:
+        all_files_tmp: list[str] = []
+        def walk_dir (walking_dir: str):
+            for root, dirs, files in os.walk(walking_dir):
+                common_root: str = path.commonpath([root, walking_dir])
+                if common_root == walking_dir:
+                    relative_root: str = root[len(walking_dir):]
+                else:
+                    print(f"WARN: cannot find common root for {root} and {walking_dir}, will break this dir.")
+                    continue 
+                for file in files:
+                    relative_file_path = de_abs_path(path.join(relative_root, file))
+                    # print(f"find file in source: {`relative_file_path`}")
+                    all_files_tmp.append(relative_file_path)
+        walk_dir(backupItem.origin_dir)
+        walk_dir(backupItem.backup_dir)
+        all_files: list[str] = sorted_paths(set(all_files_tmp))
+        for file in all_files:
+            exec_gallery.append(compare_file(backupItem, file))
+    if exec_gallery.__len__() == 0:
+        print("no files to sync ~")
+        return
     while True:
         print("! sync those files now? [y/n] ", end="")
         _in = input()
@@ -109,8 +112,6 @@ def execute_sync (backupItem: BackupItem) -> None:
             return
         elif _in == 'n':
             return
-        else:
-            print("! sync those files now? [y/n] ", end="")
 
 def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Callable:
     class NewerStatus (Enum):
@@ -164,19 +165,16 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
     # print(f"((origin_item: {origin_item.path}))")
     def wait_for_if_remove (onSync = Callable, onRemove = Callable) -> Callable[[str], Callable|None]:
         def implementation (_in: str) -> Callable|None:
-            
-            while True:
-                _in = input()
-                match _in:
-                    case "s":
-                        return onSync
-                    case "r":
-                        return onRemove
-                    case "i":
-                        return lambda: None
-                    case _:
-                        print("sync or remove? [s=sync/r=remove/i=ignore] ", end="")
-                        return None
+            match _in:
+                case "s":
+                    return onSync
+                case "r":
+                    return onRemove
+                case "i":
+                    return lambda: None
+                case _:
+                    print("sync or remove? [s=sync/r=remove/i=ignore] ", end="")
+                    return None
         return implementation
     match FileSameCheck(origin_item, backup_item):
         case NewerStatus.SAME:
@@ -250,6 +248,7 @@ else:
     sys_type: SysType = SysType.WINDOWS
 print(f"dot-config: your dot-config path is {backup_root}")
 print(f"dot-config: your system type is {sys_type}")
+print(f"dot-config: dry run mode is {dry_run}")
 print(f"Is all the information correct? [y/n] ", end="")
 while True:
     _in = input()
