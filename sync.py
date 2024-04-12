@@ -18,7 +18,7 @@ def wait_for_input (cb: Callable[[str], T_WaitForInput_Res|None]) -> T_WaitForIn
     while True:
         _in = input()
         _out = cb(_in)
-        if _out != None:
+        if _out is not None:
             return _out
 
 def replace_env_variables(input_string):
@@ -153,7 +153,7 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
         if left.size != right.size:
             return NewerStatus.DIFFERENT
         return NewerStatus.SAME
-    if relative_file_path == None:
+    if relative_file_path is None:
         backup_item: FileStatus = FileStatus(rootBackItem.backup_dir)
         origin_item: FileStatus = FileStatus(rootBackItem.origin_dir)
         file_id: str = rootBackItem.name
@@ -255,7 +255,7 @@ while True:
     match _in:
         case "y":
             print("continuing...")
-            break;
+            break
         case "n":
             print("Exiting")
             exit()
