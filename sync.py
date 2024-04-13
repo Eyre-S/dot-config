@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, TypeVar
+from typing import Callable, Generic, Iterable, TypeVar
 from enum import Enum
 from math import nan
 import os
@@ -13,13 +13,17 @@ dry_run: bool = False
 import re
 import hashlib
 
+T_Capsule = TypeVar('T_Capsule')
+class Capsule (Generic[T_Capsule]):
+    def __init__ (self, value: T_Capsule) -> None:
+        self.value: T_Capsule = value
 T_WaitForInput_Res = TypeVar('T_WaitForInput_Res')
-def wait_for_input (cb: Callable[[str], T_WaitForInput_Res|None]) -> T_WaitForInput_Res:
+def wait_for_input (cb: Callable[[str], Capsule[T_WaitForInput_Res]|None]) -> T_WaitForInput_Res:
     while True:
         _in = input()
         _out = cb(_in)
         if _out is not None:
-            return _out
+            return _out.value
 
 def replace_env_variables(input_string):
     """
@@ -76,7 +80,7 @@ class BackupItem:
 
 def execute_sync (backupItem: BackupItem) -> None:
     print(f">>> executing backup for {backupItem.name}")
-    exec_gallery: list[Callable] = []
+    exec_gallery: list[Callable|None] = []
     ### for file mode
     if (path.isfile(backupItem.origin_dir)) or (path.isfile(backupItem.backup_dir)):
         exec_gallery.append(compare_file(backupItem, None))
@@ -100,20 +104,25 @@ def execute_sync (backupItem: BackupItem) -> None:
         all_files: list[str] = sorted_paths(set(all_files_tmp))
         for file in all_files:
             exec_gallery.append(compare_file(backupItem, file))
-    if exec_gallery.__len__() == 0:
+    ### process
+    exec_gallery_filtered: list[Callable] = []
+    for (i) in exec_gallery:
+        if i is not None:
+            exec_gallery_filtered.append(i)
+    if exec_gallery_filtered.__len__() == 0:
         print("no files to sync ~")
         return
     while True:
         print("! sync those files now? [y/n] ", end="")
         _in = input()
         if _in == 'y':
-            for i in exec_gallery:
+            for i in exec_gallery_filtered:
                 i()
             return
         elif _in == 'n':
             return
 
-def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Callable:
+def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Callable|None:
     class NewerStatus (Enum):
         RIGHT_MISSING = -2
         RIGHT_OLDER = -1
@@ -163,18 +172,18 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
         file_id: str = relative_file_path
     # print(f"((backup_item: {backup_item.path}))")
     # print(f"((origin_item: {origin_item.path}))")
-    def wait_for_if_remove (onSync = Callable, onRemove = Callable) -> Callable[[str], Callable|None]:
-        def implementation (_in: str) -> Callable|None:
+    def wait_for_if_remove (onSync = Callable, onRemove = Callable) -> Callable[[str], Capsule[Callable|None]|None]:
+        def implementation (_in: str) -> Capsule[Callable|None]|None:
             match _in:
                 case "s":
-                    return onSync
+                    return Capsule(onSync)
                 case "r":
-                    return onRemove
+                    return Capsule(onRemove)
                 case "i":
-                    return lambda: None
+                    return Capsule(None)
                 case _:
                     print("sync or remove? [s=sync/r=remove/i=ignore] ", end="")
-                    return None
+                    return Capsule(None)
         return implementation
     match FileSameCheck(origin_item, backup_item):
         case NewerStatus.SAME:
@@ -188,10 +197,10 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
             return lambda: copyfile(backup_item.path, origin_item.path)
         case NewerStatus.RIGHT_MISSING:
             print(f"{file_id} : backup file is missing, sync or remove? [s=sync/r=remove/i=ignore] ", end="")
-            return wait_for_input(wait_for_if_remove(
+            return wait_for_input((wait_for_if_remove(
                 onSync = lambda: copyfile(origin_item.path, backup_item.path),
                 onRemove = lambda: delfile(origin_item.path)
-            ))
+            )))
         case NewerStatus.LEFT_MISSING:
             print(f"{file_id} : local file is missing, sync or remove? [s=sync/r=remove/i=ignore] ", end="")
             exec = wait_for_input(wait_for_if_remove(
@@ -202,14 +211,14 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
         case NewerStatus.DIFFERENT:
             print(f"{file_id} : backup is different with local, which to keep? [b=backup/l=local/i=ignore] ", end="")
             return wait_for_input(lambda _in: (
-                (lambda: copyfile(backup_item.path, origin_item.path)) if _in == 'l' else
-                (lambda: copyfile(origin_item.path, backup_item.path)) if _in == 'b' else
-                (lambda: None) if _in == 'i' else
+                Capsule((lambda: copyfile(backup_item.path, origin_item.path))) if _in == 'l' else
+                Capsule((lambda: copyfile(origin_item.path, backup_item.path))) if _in == 'b' else
+                Capsule(None) if _in == 'i' else
                 None
             ))
         case NewerStatus.ALL_MISSING:
             print(f"{file_id} : both files are missing, will skipped")
-    return lambda: None
+    return None
 
 #=== Init ===#
 
