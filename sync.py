@@ -77,14 +77,17 @@ class BackupItem:
         self.name: str = backup_dir
         self.backup_dir: str = path.join(backup_root, backup_dir)
         self.origin_dir: str = path.abspath(replace_env_variables(path.expanduser(origin_dir)))
+        self.exclude: list[str] = []
+    def add_exclude (self, exclude: str) -> None:
+        self.exclude.append(exclude)
 
 def execute_sync (backupItem: BackupItem) -> None:
     print(f">>> executing backup for {backupItem.name}")
-    exec_gallery: list[Callable|None] = []
-    ### for file mode
+    all_files: list[str|None] = []
+    ### get files: for file mode
     if (path.isfile(backupItem.origin_dir)) or (path.isfile(backupItem.backup_dir)):
-        exec_gallery.append(compare_file(backupItem, None))
-    ### for dir mode
+        all_files.append(None)
+    ### get files: for dir mode
     else:
         all_files_tmp: list[str] = []
         def walk_dir (walking_dir: str):
@@ -101,9 +104,21 @@ def execute_sync (backupItem: BackupItem) -> None:
                     all_files_tmp.append(relative_file_path)
         walk_dir(backupItem.origin_dir)
         walk_dir(backupItem.backup_dir)
-        all_files: list[str] = sorted_paths(set(all_files_tmp))
-        for file in all_files:
-            exec_gallery.append(compare_file(backupItem, file))
+        all_files_tmp_2 = sorted_paths(set(all_files_tmp))
+        for file in all_files_tmp_2:
+            skip: bool = False
+            for ex in backupItem.exclude:
+                if re.match(ex, file) is not None:
+                    skip = True
+            if skip is True:
+                # print(f"ignored:{file}")
+                continue
+            # print(f"syncing:{file}")
+            all_files.append(file)
+    ### process files rule
+    exec_gallery: list[Callable|None] = []
+    for file in all_files:
+        exec_gallery.append(compare_file(backupItem, file))
     ### process
     exec_gallery_filtered: list[Callable] = []
     for (i) in exec_gallery:
@@ -156,9 +171,9 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
                 return NewerStatus.ALL_MISSING
             return NewerStatus.RIGHT_MISSING
         if left.edited_time > right.edited_time:
-            return check_hash_same_or(NewerStatus.LEFT_OLDER)
-        elif left.edited_time < right.edited_time:
             return check_hash_same_or(NewerStatus.RIGHT_OLDER)
+        elif left.edited_time < right.edited_time:
+            return check_hash_same_or(NewerStatus.LEFT_OLDER)
         if left.size != right.size:
             return NewerStatus.DIFFERENT
         return NewerStatus.SAME
@@ -285,8 +300,13 @@ with open(config_file, 'r') as config_file_raw:
         here: str = i['path']
         there: str = i['source']
         print(f"-- loaded [{here}] <-> [{there}]")
-        table.append(BackupItem(here, there))
-
+        curr = BackupItem(here, there)
+        if 'exclude' in i:
+            exclude: list[str] = i['exclude']
+            print(f"   > excludes: ({", ".join(map(lambda x: f"\"{x}\"", exclude))})")
+            for ex in exclude:
+                curr.add_exclude(ex)
+        table.append(curr)
 print()
 for i in table:
     # print(f"((BackupItem i : {i.name}))")

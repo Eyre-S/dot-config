@@ -2,7 +2,11 @@
     "backups": [
         {
             "path": "PowerShell",
-            "source": "~/Documents/PowerShell"
+            "source": "~/Documents/PowerShell",
+            "exclude": [
+                "^Modules",
+                "^Scripts"
+            ]
         },
         {
             "path": "oh-my-posh",
