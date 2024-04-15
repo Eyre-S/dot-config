@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Iterable, TypeVar
+from typing import Callable, Generic, Iterable, Literal, TypeVar
 from enum import Enum
 from math import nan
 import os
@@ -13,17 +13,58 @@ dry_run: bool = False
 import re
 import hashlib
 
+class _GetCh:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self) -> None:
+        try:
+            self.impl = _GetChWindows()
+        except ImportError:
+            self.impl = _GetChUnix()
+
+    def __call__(self) -> str:
+        return self.impl()
+class _GetChUnix:
+    def __init__(self) -> None:
+        import tty, sys
+    def __call__(self) -> str:
+        import sys, tty, termios
+        fd: int = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch: str = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+class _GetChWindows:
+    def __init__(self) -> None:
+        import msvcrt
+    def __call__(self) -> str:
+        import msvcrt
+        return msvcrt.getch().decode('utf-8')
+input_char = _GetCh()
+
 T_Capsule = TypeVar('T_Capsule')
 class Capsule (Generic[T_Capsule]):
     def __init__ (self, value: T_Capsule) -> None:
         self.value: T_Capsule = value
+
 T_WaitForInput_Res = TypeVar('T_WaitForInput_Res')
 def wait_for_input (cb: Callable[[str], Capsule[T_WaitForInput_Res]|None]) -> T_WaitForInput_Res:
     while True:
-        _in = input()
-        _out = cb(_in)
+        sys.stdout.flush()
+        _in = input_char()
+        print()
+        _out: Capsule[T_WaitForInput_Res]|None = cb(_in)
         if _out is not None:
             return _out.value
+
+def wait_for_y_or_n_res (_in: str) -> Capsule[Literal['y', 'n']]|None:
+    if _in == 'y' or _in == 'n':
+        return Capsule(_in)
+    print("please confirm with [y/n] ", end="")
+    return None
 
 def replace_env_variables(input_string):
     """
@@ -127,15 +168,13 @@ def execute_sync (backupItem: BackupItem) -> None:
     if exec_gallery_filtered.__len__() == 0:
         print("no files to sync ~")
         return
-    while True:
-        print("! sync those files now? [y/n] ", end="")
-        _in = input()
-        if _in == 'y':
+    print("! sync those files now? [y/n] ", end="")
+    match wait_for_input(wait_for_y_or_n_res):
+        case "y":
             for i in exec_gallery_filtered:
                 i()
-            return
-        elif _in == 'n':
-            return
+        case "n":
+            print("! skipped")
 
 def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Callable|None:
     class NewerStatus (Enum):
@@ -198,7 +237,7 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
                     return Capsule(None)
                 case _:
                     print("sync or remove? [s=sync/r=remove/i=ignore] ", end="")
-                    return Capsule(None)
+                    return None
         return implementation
     match FileSameCheck(origin_item, backup_item):
         case NewerStatus.SAME:
@@ -235,7 +274,29 @@ def compare_file (rootBackItem: BackupItem, relative_file_path: str|None) -> Cal
             print(f"{file_id} : both files are missing, will skipped")
     return None
 
-#=== Init ===#
+def load_config () -> list[BackupItem]:
+    table: list[BackupItem] = []
+    config_file = path.join(backup_root, f"sync.{sys_type.value}.json")
+    if not path.isfile(config_file):
+        print(f"dot-config : FATAL : cannot find config file for current system in {config_file}")
+        exit()
+    with open(config_file, 'r') as config_file_raw:
+        config = json.load(config_file_raw)
+        for i in config['backups']:
+            here: str = i['path']
+            there: str = i['source']
+            print(f"-- loaded [{here}] <-> [{there}]")
+            curr = BackupItem(here, there)
+            if 'exclude' in i:
+                exclude: list[str] = i['exclude']
+                print("   > excludes: (%s)"%(", ".join(map(lambda x: f"\"{x}\"", exclude))))
+                # print(f"   > excludes: ({(", ".join(map(lambda x: f"\"{x}\"", exclude)))})")
+                for ex in exclude:
+                    curr.add_exclude(ex)
+            table.append(curr)
+    return table
+
+#=== main ===#
 
 for i in sys.argv:
     if i == "--help" or i == '-h':
@@ -257,8 +318,6 @@ user_home: str = path.expanduser("~")
 if user_home == "~":
     print("FATAL: Cannot read the user home dir, do you run it in the correct script?")
     exit()
-else:
-    print("dot-config: current user home: " + user_home)
 
 class SysType (Enum):
     LINUX = 'linux'
@@ -270,45 +329,23 @@ elif (backup_root[0] == "/"):
     sys_type: SysType = SysType.LINUX
 else:
     sys_type: SysType = SysType.WINDOWS
+import json
+
+print("dot-config: current user home: " + user_home)
 print(f"dot-config: your dot-config path is {backup_root}")
 print(f"dot-config: your system type is {sys_type}")
 print(f"dot-config: dry run mode is {dry_run}")
+backup_dirs: list[BackupItem] = load_config()
 print(f"Is all the information correct? [y/n] ", end="")
-while True:
-    _in = input()
-    match _in:
-        case "y":
-            print("continuing...")
-            break
-        case "n":
-            print("Exiting")
-            exit()
-        case _:
-            print("please confirm with [y/n] ", end="")
-
-#=== main ===#
-import json
-
-table: list[BackupItem] = []
-config_file = path.join(backup_root, f"sync.{sys_type.value}.json")
-if not path.isfile(config_file):
-    print(f"dot-config : FATAL : cannot find config file for current system in {config_file}")
-    exit()
-with open(config_file, 'r') as config_file_raw:
-    config = json.load(config_file_raw)
-    for i in config['backups']:
-        here: str = i['path']
-        there: str = i['source']
-        print(f"-- loaded [{here}] <-> [{there}]")
-        curr = BackupItem(here, there)
-        if 'exclude' in i:
-            exclude: list[str] = i['exclude']
-            print(f"   > excludes: ({", ".join(map(lambda x: f"\"{x}\"", exclude))})")
-            for ex in exclude:
-                curr.add_exclude(ex)
-        table.append(curr)
+match wait_for_input(wait_for_y_or_n_res):
+    case "y":
+        print("continuing...")
+    case "n":
+        print("Exiting")
+        exit()
 print()
-for i in table:
+
+for i in backup_dirs:
     # print(f"((BackupItem i : {i.name}))")
     # print(f"((i.backup_dir : {i.backup_dir}))")
     # print(f"((i.origin_dir : {i.origin_dir}))")
