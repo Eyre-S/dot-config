@@ -1,8 +1,20 @@
 {
   "backups": [
     {
-      "path": "zsh/linux.custom_rc.zsh",
-      "source": "~/.custom_rc"
+      "path": "zsh/public.zshrc.zsh",
+      "source": "~/.zshrc"
+    },
+    {
+      "path": "zsh/public.custom.zsh",
+      "source": "~/.customrc"
+    },
+    {
+      "path": "zsh/linux.env.zsh",
+      "source": "~/.envrc"
+    },
+    {
+      "path": "zsh/p10k.zsh",
+      "source": "~/.p10k.zsh"
     },
     {
       "path": "lsd",

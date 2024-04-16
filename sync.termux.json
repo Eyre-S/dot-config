@@ -1,8 +1,20 @@
 {
   "backups": [
     {
-      "path": "zsh/termux.zshrc.zsh",
+      "path": "zsh/public.zshrc.zsh",
       "source": "~/.zshrc"
+    },
+    {
+      "path": "zsh/public.custom.zsh",
+      "source": "~/.customrc"
+    },
+    {
+      "path": "zsh/termux.env.zsh",
+      "source": "~/.envrc"
+    },
+    {
+      "path": "zsh/p10k.zsh",
+      "source": "~/.p10k.zsh"
     },
     {
       "path": "lsd",
