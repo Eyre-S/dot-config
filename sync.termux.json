@@ -1,16 +1,12 @@
 {
   "backups": [
     {
-      "path": "zsh/public.zshrc.zsh",
+      "path": "zsh/zshrc.zsh",
       "source": "~/.zshrc"
     },
     {
-      "path": "zsh/public.custom.zsh",
+      "path": "zsh/custom.zsh",
       "source": "~/.customrc"
-    },
-    {
-      "path": "zsh/termux.env.zsh",
-      "source": "~/.envrc"
     },
     {
       "path": "zsh/p10k.zsh",

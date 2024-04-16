@@ -1,9 +1,13 @@
 #!/bin/zsh
 
 #--- zshrc ---#
-edit_profile () {
-	code -n -w $profile
+
+profile () {
 	source $profile
+}
+profile-edit () {
+	$POPUP_EDIT $profile
+	profile
 }
 
 #--- bat (cat) ---#
