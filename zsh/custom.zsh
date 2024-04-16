@@ -1,8 +1,18 @@
 #!/bin/zsh
 
-#=== bat (cat)
+#--- zshrc ---#
+
+profile () {
+	source $profile
+}
+profile-edit () {
+	$POPUP_EDIT $profile
+	profile
+}
+
+#--- bat (cat) ---#
 alias cat='bat'
-#=== lsd
+#--- lsd ---#
 alias cols='lsd'
 alias crls='cols'
 alias ccls='crls -g'
@@ -16,7 +26,7 @@ alias ll='cll'
 alias la='cla'
 alias lgg='ccls --tree'
 
-#=== zoxide (cd)
+#--- zoxide (cd) ---#
 # zoxide must init after compinit is called
 eval "$(zoxide init zsh)"
 alias cd='z'
