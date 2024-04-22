@@ -35,6 +35,7 @@
     os_icon                 # os identifier
     # cpu_arch              # CPU architecture
     context                 # user@hostname
+    disk_usage            # disk usage
     ip                    # ip address and bandwidth usage for a specified network interface
     # public_ip             # public IP address
     # =========================[ Line #2 ]=========================
@@ -52,18 +53,16 @@
   # last prompt line gets hidden if it would overlap with left prompt.
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
     # =========================[ Line #1 ]=========================
-    proxy                 # system-wide http/https/ftp proxy
-    battery               # internal battery
-    ram                   # free RAM
     # wifi                  # wifi speed
     # vpn_ip                # virtual private network indicator
-    # load                  # CPU load
-    # disk_usage            # disk usage
-    # swap                  # used swap
+    proxy                 # system-wide http/https/ftp proxy
     todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
     timewarrior             # timewarrior tracking status (https://timewarrior.net/)
     taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
     per_directory_history   # Oh My Zsh per-directory-history local/global indicator
+    ram                   # free RAM
+    # swap                  # used swap
+    # load                  # CPU load
     time                    # current time
     newline                 # \n
     # =========================[ Line #2 ]=========================
@@ -116,6 +115,7 @@
     midnight_commander      # midnight commander shell (https://midnight-commander.org/)
     nix_shell               # nix shell (https://nixos.org/nixos/nix-pills/developing-with-nix-shell.html)
     chezmoi_shell           # chezmoi shell (https://www.chezmoi.io/)
+    battery               # internal battery
     # =========================[ Line #3 ]=========================
     newline
     # example               # example user-defined segment (see prompt_example function below)
@@ -1710,7 +1710,7 @@
   #   - verbose: Enable instant prompt and print a warning when detecting console output during
   #              zsh initialization. Choose this if you've never tried instant prompt, haven't
   #              seen the warning, or if you are unsure what this all means.
-  typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
   # Hot reload allows you to change POWERLEVEL9K options after Powerlevel10k has been initialized.
   # For example, you can type POWERLEVEL9K_BACKGROUND=red and see your prompt turn red. Hot reload
