@@ -323,9 +323,9 @@ class SysType (Enum):
     LINUX = 'linux'
     TERMUX = 'termux'
     WINDOWS = 'windows'
-if ("termux" in backup_root):
+if ("termux" in user_home):
     sys_type: SysType = SysType.TERMUX
-elif (backup_root[0] == "/"):
+elif (user_home[0] == "/"):
     sys_type: SysType = SysType.LINUX
 else:
     sys_type: SysType = SysType.WINDOWS
